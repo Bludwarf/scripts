@@ -96,13 +96,17 @@ $codecMap = @{
     ogg = "libvorbis"
 }
 
-if ($Album) {
-    Write-Host "Album : $Album`n"
-}
-
 # Langue de la piste audio sélectionnée, déduite via ffprobe (repli sur "und" si absente).
 $trackLanguage = & ffprobe -i "$Video" -select_streams "a:$Track" -show_entries "stream_tags=language" -of csv=p=0 -v quiet
 $trackLanguage = if ([string]::IsNullOrWhiteSpace($trackLanguage)) { "und" } else { $trackLanguage.Trim() }
+
+Write-Host "Langue : $trackLanguage"
+
+if ($Album) {
+    Write-Host "Album : $Album"
+}
+
+Write-Host
 
 # Args communs à tous les chapitres, sortis de la boucle.
 # "language" est une métadonnée de PISTE (pas globale) : on la cible avec -metadata:s:a:0
@@ -112,6 +116,7 @@ $commonMetadataArgs = @(
     "-metadata", "encoded_by=Extraire-ChapitresAudio.ps1 $ScriptVersion via ffmpeg $ffmpegVersion",
     "-metadata:s:a:0", "language=$trackLanguage"
 )
+
 
 $i = 0
 foreach ($chap in $chapters) {
@@ -154,7 +159,7 @@ foreach ($chap in $chapters) {
         $ffmpegArgs += @("-metadata", "album=$Album")
     }
 
-    $ffmpegArgs += @("-loglevel", "error", $outPath)
+    $ffmpegArgs += @("-loglevel", "warning", $outPath)
 
     & ffmpeg @ffmpegArgs
 
